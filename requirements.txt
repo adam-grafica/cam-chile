@@ -1,0 +1,16 @@
+# Backend
+fastapi==0.115.0
+uvicorn==0.30.6
+httpx==0.27.2
+python-masscan==1.0.6
+
+# Scraping
+tubescrape==1.2.0
+beautifulsoup4==4.12.3
+lxml==5.2.2
+
+# OSINT
+geopy==2.4.1
+
+# Testing
+pytest==8.3.3
