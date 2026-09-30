@@ -1,0 +1,65 @@
+# CAM-CHILE — docker-compose.yml (uso local, NO exposición pública)
+#
+# Política (ADR-0003):
+# - NO hay puertos publicados en 0.0.0.0
+# - Los servicios se comunican por la red interna `backend-net`
+# - Para usar local: `docker compose up` y luego `curl http://127.0.0.1:8000`
+#   desde el host — el mapeo de puertos se hace aquí como `127.0.0.1:8000:8000`
+#   para mantenerlo fuera de la red pública.
+#
+# Para CI / smoke: usar `docker compose -f docker-compose.test.yml up` o equivalente.
+
+services:
+  backend:
+    build:
+      context: .
+      target: runtime
+    image: cam-chile:test
+    container_name: camchile-backend
+    # Bind a 127.0.0.1 — NO accesible desde la red pública.
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ENV: development
+      LOG_FORMAT: json
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: "http://127.0.0.1:8080,http://localhost:8080"
+      ALLOWED_HOSTS: "youtube.com,youtu.be,youtube-nocookie.com,webcams.travel,skylinewebcams.com,almaobservatory.org"
+      BLOCK_PRIVATE_NETWORKS: "true"
+      RATE_LIMIT_PER_MINUTE: "60"
+    volumes:
+      # Persistir la DB SQLite entre runs locales.
+      - camchile-db:/app/backend/db
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: camchile-frontend
+    # Solo accesible desde 127.0.0.1.
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/app/frontend:ro
+    networks:
+      - backend-net
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  camchile-db:
+
+networks:
+  backend-net:
+    driver: bridge
+    # La red interna queda sin driver_opts para no exponer hacia afuera.
+    internal: false

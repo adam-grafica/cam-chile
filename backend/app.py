@@ -10,13 +10,18 @@ de Chile. Endpoints:
   - POST /api/cameras → agrega cámara (con SSRF guard)
   - POST /api/validate → valida una URL contra allowlist + SSRF guard
   - GET  /api/agents/jobs → estado de jobs (placeholder)
+
+Logging:
+  - JSON por stdout (parseable por jq) cuando LOG_FORMAT=json.
+  - Cada request lleva un `X-Request-ID` (UUID4) y se loguea con `request_id`.
 """
 
 from __future__ import annotations
 
 import logging
 import sqlite3
-import sys
+import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
@@ -27,6 +32,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, HttpUrl
 
 from backend.db.migrate import main as run_migrations
+from backend.logging_config import configure_logging
 from backend.security.allowlist import is_host_allowed
 from backend.security.ssrf import SSRFError, assert_safe_url
 from backend.settings import get_settings
@@ -37,36 +43,11 @@ logger = logging.getLogger("camchile")
 DB_PATH = Path("backend/db/cameras.db")
 
 
-def _configure_logging(fmt: str, level: str) -> None:
-    if fmt == "json":
-        try:
-            from pythonjsonlogger import jsonlogger
-
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(
-                jsonlogger.JsonFormatter(
-                    "%(asctime)s %(levelname)s %(name)s %(message)s"
-                )
-            )
-        except ImportError:
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(
-                logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-            )
-    else:
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-        )
-    logger.handlers = [handler]
-    logger.setLevel(level.upper())
-
-
 # ─── Lifespan ───────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
-    _configure_logging(settings.log_format, settings.log_level)
+    configure_logging(level=settings.log_level, fmt=settings.log_format)
     # Aplicar migraciones al arranque
     try:
         run_migrations()
@@ -78,7 +59,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="CAM-CHILE API",
-    version="1.1.0",
+    version="1.1.1",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url=None,
@@ -87,11 +68,49 @@ app = FastAPI(
 
 # ─── Middleware ──────────────────────────────────────────────────────────────
 @app.middleware("http")
-async def _security_headers(request: Request, call_next):  # type: ignore[no-untyped-def]
-    resp = await call_next(request)
+async def _request_id_and_log(request: Request, call_next):  # type: ignore[no-untyped-def]
+    """Asigna/respeta X-Request-ID y loguea inicio + fin con duración."""
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = request_id
+    start = time.perf_counter()
+    logger.info(
+        "request.start",
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+        },
+    )
+    try:
+        resp = await call_next(request)
+    except Exception as e:  # pragma: no cover
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        logger.exception(
+            "request.error",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "elapsed_ms": round(elapsed_ms, 2),
+                "error": str(e),
+            },
+        )
+        raise
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    resp.headers["X-Request-ID"] = request_id
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     resp.headers["X-Frame-Options"] = "DENY"
+    logger.info(
+        "request.end",
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": resp.status_code,
+            "elapsed_ms": round(elapsed_ms, 2),
+        },
+    )
     return resp
 
 
