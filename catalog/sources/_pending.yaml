@@ -12,27 +12,31 @@
   latitude: -23.0294
   longitude: -67.7528
   source_name: "ALMA Observatory"
-  source_url: "https://www.almaobservatory.org/en/webcams/"
-  stream_type: youtube_embed
-  # TODO: catalog debe reemplazar por el ID real del canal verificado
-  stream_url: "PENDING_VALIDATION"
+  source_url: "https://www.almaobservatory.org/en/live-from-chajnantor/"
+  stream_type: iframe
+  # El iframe de la página "Live from Chajnantor" apunta a https://www.alma.cl/aos_cam,
+  # pero ese URL devuelve 404 al verificar (2026-09-30). Sin stream URL reproducible,
+  # la entrada NO se mueve a chile.yaml.
+  stream_url: "https://www.alma.cl/aos_cam"
   public_status: unknown
-  license_or_terms_url: "https://www.almaobservatory.org/en/terms-of-use/"
-  last_checked_at: "2026-09-29T00:00:00Z"
-  # Bloqueos conocidos:
-  #   - stream_url pendiente de validación con oEmbed
-  #   - public_status no es declared_public
+  # License verificada en https://www.almaobservatory.org/en/copyright-notice/.
+  # CC BY 4.0 con exclusiones: música, papers, código y textos específicos.
+  # Aplica para imágenes/material de ALMA pero requiere verificación del tipo
+  # específico del stream (live feed no cae explícitamente bajo "pictures of the week").
+  license_or_terms_url: "https://www.almaobservatory.org/en/copyright-notice/"
+  last_checked_at: "2026-09-30T06:24:43Z"
   blocked_reasons:
-    - "stream_url es PENDING_VALIDATION"
-    - "public_status != declared_public"
+    - "stream_url https://www.alma.cl/aos_cam returns HTTP 404 (declared iframe in 'Live from Chajnantor' page is dead)"
+    - "no working alternative stream URL found via 7 variants tested"
+    - "license is partial CC BY 4.0 with explicit material-type exclusions"
+    - "no specific YouTube live video ID discovered for oEmbed verification"
+  evidence_ref: "catalog/.cache/alma-checks.json"
 
 - id: tvn-24h-candidate
   name: "TVN 24 Horas"
   country: CL
   region: "Metropolitana de Santiago"
   city: "Santiago"
-  # Coordenada del canal (no del lugar físico). Pendiente de confirmar
-  # dirección exacta de la señal.
   latitude: -33.4489
   longitude: -70.6693
   source_name: "Televisión Nacional de Chile"
