@@ -101,7 +101,11 @@ cam-chile/
 ## 🧪 Desarrollo local
 
 ```bash
-# 1. Bootstrap (clona repo y sincroniza main)
+# 0. Variables de entorno (necesario antes de cualquier script/*)
+source scripts/env.sh
+#  → exporta CAM_CHILE_ROOT (default /opt/orca/cam-chile), CAM_CHILE_REPO, CAM_CHILE_WORKTREES
+
+# 1. Bootstrap (clona repo y sincroniza main; usa $CAM_CHILE_ROOT)
 bash scripts/bootstrap.sh
 
 # 2. Setup
@@ -117,10 +121,27 @@ make migrate
 make dev
 
 # 6. Tests
-make test
+make test                                  # pytest + coverage ≥80%
+bash scripts/tests/test_bootstrap.sh       # test del script bootstrap (hermético)
+bash scripts/tests/test_add_worktree.sh    # test de add-worktree (hermético)
+bash scripts/tests/test_cleanup_worktree.sh # test de cleanup-worktree (hermético)
 
 # 7. Servir frontend (en otra terminal)
 cd frontend && python3 -m http.server 8080
+```
+
+### Worktrees de agentes
+
+```bash
+# Crear worktree para un agente
+bash scripts/add-worktree.sh <agent> <issue-n> <slug>
+#   ej: bash scripts/add-worktree.sh catalog 3 curated-chile-sources
+#   resultado:
+#     - worktree: $CAM_CHILE_ROOT/worktrees/catalog-issue-3
+#     - rama:     agent/catalog/issue-3-curated-chile-sources
+
+# Limpiar worktree tras merge
+bash scripts/cleanup-worktree.sh <agent> <issue-n> <slug>
 ```
 
 ## 🤖 Coordinación multi-agente
