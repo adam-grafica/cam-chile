@@ -1,6 +1,7 @@
 """
 Tests del backend FastAPI: healthz, readyz, validate, CORS, schema response.
 """
+
 import sqlite3
 from pathlib import Path
 
@@ -59,7 +60,9 @@ def test_cors_not_wildcard_with_credentials(client):
 
 
 def test_validate_url_youtube_ok(client):
-    r = client.post("/api/validate", json={"url": "https://www.youtube.com/watch?v=abc"})
+    r = client.post(
+        "/api/validate", json={"url": "https://www.youtube.com/watch?v=abc"}
+    )
     assert r.status_code == 200
     data = r.json()
     assert data["host_allowed"] is True
@@ -138,6 +141,17 @@ def test_list_cameras_returns_canonic_keys(client):
     r = client.get("/api/cameras")
     assert len(r.json()) == 1
     keys = set(r.json()[0].keys())
-    assert {"country", "region", "city", "latitude", "longitude", "source_name",
-            "source_url", "stream_type", "stream_url", "public_status",
-            "license_or_terms_url", "last_checked_at"}.issubset(keys)
+    assert {
+        "country",
+        "region",
+        "city",
+        "latitude",
+        "longitude",
+        "source_name",
+        "source_url",
+        "stream_type",
+        "stream_url",
+        "public_status",
+        "license_or_terms_url",
+        "last_checked_at",
+    }.issubset(keys)

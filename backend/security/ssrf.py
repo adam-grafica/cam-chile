@@ -6,6 +6,7 @@ Uso:
     from backend.security.ssrf import assert_safe_url
     assert_safe_url(url)            # raise SSRFError si no es seguro
 """
+
 from __future__ import annotations
 
 import ipaddress

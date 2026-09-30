@@ -8,6 +8,7 @@ Para descubrir canales, el Orchestrator mantiene un catálogo curado
 (`catalog/sources/chile.yaml`) con los IDs de canal validados manualmente.
 Este agente solo verifica que un video/canal sea público y responde oEmbed.
 """
+
 from __future__ import annotations
 
 import logging
@@ -86,7 +87,9 @@ def main() -> int:
     import json
     from datetime import datetime, timezone
 
-    p = argparse.ArgumentParser(description="Verifica que un video de YouTube es público")
+    p = argparse.ArgumentParser(
+        description="Verifica que un video de YouTube es público"
+    )
     p.add_argument("url", help="URL del video de YouTube")
     args = p.parse_args()
 

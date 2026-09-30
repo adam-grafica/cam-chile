@@ -1,6 +1,7 @@
 """
 Tests para backend.security.allowlist
 """
+
 import os
 from unittest import mock
 

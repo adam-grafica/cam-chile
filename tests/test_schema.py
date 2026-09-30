@@ -3,12 +3,10 @@ Tests para el esquema de DB y la migración.
 
 Usa DB temporal en /tmp para no contaminar el repo.
 """
+
 import sqlite3
-import subprocess
-import sys
 from pathlib import Path
 
-import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA = REPO_ROOT / "backend" / "db" / "schema.sql"
@@ -71,7 +69,14 @@ def test_migration_001_is_valid_sql():
         conn.execute(
             "INSERT INTO cameras (name, lat, lon, feed_type, stream_url, address) "
             "VALUES (?, ?, ?, ?, ?, ?)",
-            ("Test Cam", -33.0, -70.0, "youtube", "https://www.youtube.com/watch?v=x", "CL"),
+            (
+                "Test Cam",
+                -33.0,
+                -70.0,
+                "youtube",
+                "https://www.youtube.com/watch?v=x",
+                "CL",
+            ),
         )
         conn.commit()
         # Aplicar migración
@@ -99,18 +104,65 @@ def test_migrate_script_runs(tmp_path, monkeypatch):
     # Copiamos __init__.py para que `backend.db.migrate` sea importable
     (tmp_path / "backend").mkdir(exist_ok=True)
     (tmp_path / "backend" / "__init__.py").write_text("")
-    shutil.copy(REPO_ROOT / "backend" / "__init__.py", tmp_path / "backend" / "__init__.py")
     shutil.copy(
-        REPO_ROOT / "backend" / "db" / "__init__.py", tmp_path / "backend" / "db" / "__init__.py"
+        REPO_ROOT / "backend" / "__init__.py", tmp_path / "backend" / "__init__.py"
     )
-    shutil.copy(MIGRATION_001, tmp_path / "backend" / "db" / "migrations" / "001_align_to_spec.sql")
+    shutil.copy(
+        REPO_ROOT / "backend" / "db" / "__init__.py",
+        tmp_path / "backend" / "db" / "__init__.py",
+    )
+    shutil.copy(
+        MIGRATION_001,
+        tmp_path / "backend" / "db" / "migrations" / "001_align_to_spec.sql",
+    )
     shutil.copy(SCHEMA, tmp_path / "backend" / "db" / "schema.sql")
     (tmp_path / "backend" / "db" / "cameras.db").touch()
 
     # Importa y corre la función main() directamente
     from backend.db import migrate as migrate_mod
 
-    monkeypatch.setattr(migrate_mod, "DB_PATH", tmp_path / "backend" / "db" / "cameras.db")
-    monkeypatch.setattr(migrate_mod, "MIGRATIONS_DIR", tmp_path / "backend" / "db" / "migrations")
+    monkeypatch.setattr(
+        migrate_mod, "DB_PATH", tmp_path / "backend" / "db" / "cameras.db"
+    )
+    monkeypatch.setattr(
+        migrate_mod, "MIGRATIONS_DIR", tmp_path / "backend" / "db" / "migrations"
+    )
     rc = migrate_mod.main()
     assert rc == 0
+
+
+def test_migrate_script_skips_applied(tmp_path, monkeypatch):
+    """Una migración ya aplicada debe skipearse (no error)."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "backend" / "db" / "migrations").mkdir(parents=True)
+    import shutil
+
+    (tmp_path / "backend").mkdir(exist_ok=True)
+    (tmp_path / "backend" / "__init__.py").write_text("")
+    shutil.copy(
+        REPO_ROOT / "backend" / "__init__.py", tmp_path / "backend" / "__init__.py"
+    )
+    shutil.copy(
+        REPO_ROOT / "backend" / "db" / "__init__.py",
+        tmp_path / "backend" / "db" / "__init__.py",
+    )
+    shutil.copy(
+        MIGRATION_001,
+        tmp_path / "backend" / "db" / "migrations" / "001_align_to_spec.sql",
+    )
+    shutil.copy(SCHEMA, tmp_path / "backend" / "db" / "schema.sql")
+    (tmp_path / "backend" / "db" / "cameras.db").touch()
+
+    from backend.db import migrate as migrate_mod
+
+    monkeypatch.setattr(
+        migrate_mod, "DB_PATH", tmp_path / "backend" / "db" / "cameras.db"
+    )
+    monkeypatch.setattr(
+        migrate_mod, "MIGRATIONS_DIR", tmp_path / "backend" / "db" / "migrations"
+    )
+
+    # Primera corrida aplica
+    assert migrate_mod.main() == 0
+    # Segunda corrida debe skipear sin error
+    assert migrate_mod.main() == 0

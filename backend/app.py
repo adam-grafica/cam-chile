@@ -11,17 +11,17 @@ de Chile. Endpoints:
   - POST /api/validate → valida una URL contra allowlist + SSRF guard
   - GET  /api/agents/jobs → estado de jobs (placeholder)
 """
+
 from __future__ import annotations
 
 import logging
 import sqlite3
 import sys
-import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated, AsyncIterator
+from typing import AsyncIterator
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, HttpUrl
@@ -29,7 +29,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from backend.db.migrate import main as run_migrations
 from backend.security.allowlist import is_host_allowed
 from backend.security.ssrf import SSRFError, assert_safe_url
-from backend.settings import Settings, get_settings
+from backend.settings import get_settings
 
 # ─── Logging ────────────────────────────────────────────────────────────────
 logger = logging.getLogger("camchile")
@@ -44,14 +44,20 @@ def _configure_logging(fmt: str, level: str) -> None:
 
             handler = logging.StreamHandler(sys.stdout)
             handler.setFormatter(
-                jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+                jsonlogger.JsonFormatter(
+                    "%(asctime)s %(levelname)s %(name)s %(message)s"
+                )
             )
         except ImportError:
             handler = logging.StreamHandler(sys.stdout)
-            handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+            handler.setFormatter(
+                logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+            )
     else:
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        )
     logger.handlers = [handler]
     logger.setLevel(level.upper())
 
@@ -123,7 +129,9 @@ class Camera(BaseModel):
     source_url: HttpUrl
     stream_type: str = Field(..., pattern="^(youtube|youtube_embed|hls|mp4|iframe)$")
     stream_url: HttpUrl
-    public_status: str = Field(default="declared_public", pattern="^(declared_public|unknown|revoked)$")
+    public_status: str = Field(
+        default="declared_public", pattern="^(declared_public|unknown|revoked)$"
+    )
     license_or_terms_url: HttpUrl | None = None
 
 
@@ -158,7 +166,9 @@ def readyz():
         ).fetchone()
         c.close()
         if not row:
-            return JSONResponse({"status": "not_ready", "reason": "no schema"}, status_code=503)
+            return JSONResponse(
+                {"status": "not_ready", "reason": "no schema"}, status_code=503
+            )
         return {"status": "ready"}
     except Exception as e:
         return JSONResponse({"status": "not_ready", "reason": str(e)}, status_code=503)
@@ -233,7 +243,9 @@ def validate_url(payload: ValidateURLIn):
     except SSRFError as e:
         reason = str(e)
         ssrf_ok = False
-    return ValidateURLOut(url=url, host_allowed=host_ok, ssrf_safe=ssrf_ok, reason=reason)
+    return ValidateURLOut(
+        url=url, host_allowed=host_ok, ssrf_safe=ssrf_ok, reason=reason
+    )
 
 
 @app.get("/api/agents/jobs")

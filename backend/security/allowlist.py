@@ -9,6 +9,7 @@ Uso:
     if not is_host_allowed(url):
         raise HTTPException(400, "Host not in allowlist")
 """
+
 from __future__ import annotations
 
 import os

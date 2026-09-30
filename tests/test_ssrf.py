@@ -1,6 +1,7 @@
 """
 Tests para backend.security.ssrf
 """
+
 import pytest
 
 from backend.security.ssrf import SSRFError, assert_safe_url
@@ -30,7 +31,11 @@ def test_rejects_loopback_via_ip(monkeypatch):
     # Simulamos que el host "public.youtube.com" resuelve a 127.0.0.1 (DNS rebinding).
     import backend.security.ssrf as ssrf_mod
 
-    monkeypatch.setattr(ssrf_mod.socket, "getaddrinfo", lambda *a, **kw: [(2, 1, 6, "", ("127.0.0.1", 0))])
+    monkeypatch.setattr(
+        ssrf_mod.socket,
+        "getaddrinfo",
+        lambda *a, **kw: [(2, 1, 6, "", ("127.0.0.1", 0))],
+    )
     # Quitamos la allowlist para forzar que la verificación pase el filtro de host
     monkeypatch.setenv("ALLOWED_HOSTS", "public.youtube.com")
     with pytest.raises(SSRFError, match="private IP"):
@@ -40,7 +45,11 @@ def test_rejects_loopback_via_ip(monkeypatch):
 def test_rejects_private_ip(monkeypatch):
     import backend.security.ssrf as ssrf_mod
 
-    monkeypatch.setattr(ssrf_mod.socket, "getaddrinfo", lambda *a, **kw: [(2, 1, 6, "", ("192.168.1.1", 0))])
+    monkeypatch.setattr(
+        ssrf_mod.socket,
+        "getaddrinfo",
+        lambda *a, **kw: [(2, 1, 6, "", ("192.168.1.1", 0))],
+    )
     monkeypatch.setenv("ALLOWED_HOSTS", "leak.test")
     with pytest.raises(SSRFError, match="private IP"):
         assert_safe_url("https://leak.test/")
@@ -49,7 +58,11 @@ def test_rejects_private_ip(monkeypatch):
 def test_rejects_link_local(monkeypatch):
     import backend.security.ssrf as ssrf_mod
 
-    monkeypatch.setattr(ssrf_mod.socket, "getaddrinfo", lambda *a, **kw: [(2, 1, 6, "", ("169.254.169.254", 0))])
+    monkeypatch.setattr(
+        ssrf_mod.socket,
+        "getaddrinfo",
+        lambda *a, **kw: [(2, 1, 6, "", ("169.254.169.254", 0))],
+    )
     monkeypatch.setenv("ALLOWED_HOSTS", "aws.test")
     with pytest.raises(SSRFError, match="private IP"):
         assert_safe_url("https://aws.test/latest/meta-data/")
