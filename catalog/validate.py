@@ -6,8 +6,8 @@ Política:
   `license_or_terms_url` real y todos los campos requeridos.
 - `_pending.yaml`: entradas con `blocked_reasons` documentadas (no publicables).
 
-Por defecto NO hace requests de red (modo offline / CI). Para verificar oEmbed
-real, usar `--check-online`.
+Modo hermético: NO hace requests de red. Verificación online de oEmbed
+queda para el issue atómico (ver `--check-online` TODO en docs).
 
 Exit codes:
   0  → todas las entradas OK (o pending con bloqueos documentados).
