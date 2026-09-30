@@ -16,12 +16,12 @@ GitHub es la fuente de verdad para planificación, issues, decisiones, evidencia
 ## Oracle/Linux y worktrees
 
 Repositorio: `https://github.com/adam-grafica/cam-chile.git`
-Directorio: `/opt/cam-chile`
+Directorio: `${CAM_CHILE_ROOT:-/opt/orca/cam-chile}`
 
 ```bash
-sudo mkdir -p /opt/cam-chile/worktrees
-sudo chown -R "$USER":"$USER" /opt/cam-chile
-cd /opt/cam-chile
+sudo mkdir -p ${CAM_CHILE_ROOT:-/opt/orca/cam-chile}/worktrees
+sudo chown -R "$USER":"$USER" ${CAM_CHILE_ROOT:-/opt/orca/cam-chile}
+cd ${CAM_CHILE_ROOT:-/opt/orca/cam-chile}
 git clone https://github.com/adam-grafica/cam-chile.git repo
 cd repo
 git fetch origin
@@ -32,7 +32,7 @@ git pull --ff-only origin main
 Cada agente trabaja exclusivamente en su rama y worktree:
 
 ```bash
-cd /opt/cam-chile/repo
+cd ${CAM_CHILE_ROOT:-/opt/orca/cam-chile}/repo
 git worktree add ../worktrees/<agent>-issue-<n> \
   -b agent/<agent>/issue-<n>-<slug> origin/main
 cd ../worktrees/<agent>-issue-<n>
@@ -41,7 +41,7 @@ cd ../worktrees/<agent>-issue-<n>
 Después del merge:
 
 ```bash
-cd /opt/cam-chile/repo
+cd ${CAM_CHILE_ROOT:-/opt/orca/cam-chile}/repo
 git worktree remove ../worktrees/<agent>-issue-<n>
 git branch -d agent/<agent>/issue-<n>-<slug>
 git fetch --prune origin
@@ -57,7 +57,7 @@ OrcaDev es el entorno operativo. El **Orchestrator** es responsable de crear, ad
 2. Convertir la fase actual en issues atómicos, con criterio de aceptación, dependencias, rol responsable y definición de listo.
 3. Crear el worktree y la rama de cada subagente antes de invocarlo:
    ```bash
-   cd /opt/cam-chile/repo
+   cd ${CAM_CHILE_ROOT:-/opt/orca/cam-chile}/repo
    git fetch origin
    git worktree add ../worktrees/<agent>-issue-<n> \
      -b agent/<agent>/issue-<n>-<slug> origin/main
@@ -86,7 +86,7 @@ La comunicación A2A debe ser **auditada y persistente en GitHub**. No se permit
 - Agente: `<agent>`
 - Issue: #<n>
 - Rama: `agent/<agent>/issue-<n>-<slug>`
-- Worktree: `/opt/cam-chile/worktrees/<agent>-issue-<n>`
+- Worktree: `${CAM_CHILE_ROOT:-/opt/orca/cam-chile}/worktrees/<agent>-issue-<n>`
 - Alcance: ...
 - Archivos previstos: ...
 - Dependencias: ...
@@ -185,7 +185,7 @@ Resultado: ...
 
 Actúa como Orchestrator senior de CAM-CHILE dentro de OrcaDev en Oracle/Linux. GitHub es la fuente de verdad. Lee y cumple este documento antes de modificar código.
 
-Eres responsable de crear y administrar los worktrees y ramas de todos los subagentes. Ningún subagente comienza trabajo hasta que le hayas creado: (1) un issue atómico, (2) una rama exclusiva y (3) un worktree exclusivo dentro de `/opt/cam-chile/worktrees`. Registra el inicio, handoffs, bloqueos y resultados A2A en GitHub usando las plantillas de este documento.
+Eres responsable de crear y administrar los worktrees y ramas de todos los subagentes. Ningún subagente comienza trabajo hasta que le hayas creado: (1) un issue atómico, (2) una rama exclusiva y (3) un worktree exclusivo dentro de `${CAM_CHILE_ROOT:-/opt/orca/cam-chile}/worktrees`. Registra el inicio, handoffs, bloqueos y resultados A2A en GitHub usando las plantillas de este documento.
 
 Inspecciona el repositorio, branches e issues. Comenta primero en el Issue #1: diagnóstico técnico, riesgos, fases, dependencias, issues faltantes y el primer issue que tomarás. Después trabaja solamente en el primer issue listo, mediante un worktree y rama exclusivos. No hagas push directo a `main`.
 
