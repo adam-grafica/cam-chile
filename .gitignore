@@ -33,3 +33,4 @@ coverage.xml
 
 # Logs
 *.log.tools/
+.tools/

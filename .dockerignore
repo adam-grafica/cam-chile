@@ -1,0 +1,44 @@
+# Excluir del contexto de Docker build
+.git/
+.github/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# No incluir secretos ni configuración local.
+.env
+.env.*
+!.env.example
+
+# DB local y caches
+backend/db/*.db
+backend/db/*.sqlite
+catalog/.cache/
+
+# Build artifacts
+dist/
+build/
+*.whl
+node_modules/
+
+# IDE y testing
+.vscode/
+.idea/
+.coverage
+htmlcov/
+coverage.xml
+.pytest_cache/
+*.log
+
+# Documentación (no es parte de la imagen)
+docs/
+
+# Worktrees y archivos auxiliares
+.worktrees/
+.tools/
+
+# El propio archivo de issue que se generó por error
+issue-7-body.md
