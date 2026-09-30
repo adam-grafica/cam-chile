@@ -47,11 +47,73 @@ git branch -d agent/<agent>/issue-<n>-<slug>
 git fetch --prune origin
 ```
 
+## OrcaDev: orquestación y comunicación A2A
+
+OrcaDev es el entorno operativo. El **Orchestrator** es responsable de crear, administrar y limpiar los worktrees de todos los subagentes. Ningún subagente modifica `main`, reutiliza el worktree de otro agente ni crea trabajo fuera de un issue asignado.
+
+### Responsabilidades del Orchestrator
+
+1. Leer GitHub antes de delegar: Issue #1, issues abiertos, PRs abiertos, ramas y bloqueos.
+2. Convertir la fase actual en issues atómicos, con criterio de aceptación, dependencias, rol responsable y definición de listo.
+3. Crear el worktree y la rama de cada subagente antes de invocarlo:
+   ```bash
+   cd /opt/cam-chile/repo
+   git fetch origin
+   git worktree add ../worktrees/<agent>-issue-<n> \
+     -b agent/<agent>/issue-<n>-<slug> origin/main
+   ```
+4. Entregar al subagente un único objetivo, los archivos permitidos, el issue, criterios de aceptación, comandos de prueba y restricciones de seguridad.
+5. Evitar conflictos: dos subagentes no editan simultáneamente el mismo módulo ni comparten worktree.
+6. Consolidar sólo resultados enviados como commits en la rama asignada y Pull Requests contra `main`.
+7. Tras merge, eliminar el worktree y rama ya integrados; liberar el siguiente bloque de trabajo.
+
+### Comunicación agente-a-agente (A2A)
+
+La comunicación A2A debe ser **auditada y persistente en GitHub**. No se permiten handoffs opacos ni instrucciones que no queden registradas.
+
+- Cada inicio se comenta en el issue con: agente, rama, ruta del worktree, alcance, dependencias y ETA aproximada.
+- Cada bloqueo se comenta en el issue correspondiente y etiqueta la tarea de la que depende.
+- Cada handoff deja un comentario con: contexto, archivos modificados, estado de pruebas, decisiones tomadas, riesgos y siguiente acción recomendada.
+- El receptor confirma el handoff respondiendo en el mismo issue antes de comenzar.
+- Las decisiones que afectan arquitectura van en Issue #1 o en una ADR dentro de `docs/adr/` mediante PR.
+- El código se comunica mediante commits y PRs; nunca copiando archivos entre worktrees.
+- El Orchestrator consulta GitHub antes de asignar una dependencia para evitar duplicidad y conflictos.
+
+### Plantilla A2A de inicio
+
+```md
+🚀 Inicio A2A
+- Agente: `<agent>`
+- Issue: #<n>
+- Rama: `agent/<agent>/issue-<n>-<slug>`
+- Worktree: `/opt/cam-chile/worktrees/<agent>-issue-<n>`
+- Alcance: ...
+- Archivos previstos: ...
+- Dependencias: ...
+- Criterios de aceptación: ...
+```
+
+### Plantilla A2A de handoff
+
+```md
+🔁 Handoff A2A
+- De: `<agent>`
+- Para: `<agent>`
+- Issue: #<n>
+- Rama / PR: ...
+- Estado: listo para continuar | bloqueado | listo para QA
+- Cambios realizados: ...
+- Pruebas y resultado: ...
+- Decisiones técnicas: ...
+- Riesgos o pendientes: ...
+- Siguiente acción concreta: ...
+```
+
 ## Roles de agentes
 
 | Agente | Responsabilidad | Modelo recomendado |
 |---|---|---|
-| `orchestrator` | Fases, dependencias, coordinación y reportes | MINIMAX-M3 `/effort ultra code` |
+| `orchestrator` | Fases, dependencias, worktrees, coordinación A2A y reportes | MINIMAX-M3 `/effort ultra code` |
 | `catalog` | Fuentes públicas/autorizadas y procedencia | MINIMAX-M3 |
 | `metadata` | Normalización, deduplicación y validación | Codex u OpenCode |
 | `frontend` | UX/UI minimalista, rápida, responsive y accesible | Antigravity o MINIMAX-M3 |
@@ -63,7 +125,7 @@ git fetch --prune origin
 1. Sincronizar `main` antes de iniciar.
 2. Leer `README.md`, `ROADMAP.md`, este documento y los issues abiertos.
 3. Tomar un solo issue listo; comentar bloqueo si tiene dependencias.
-4. Crear rama y worktree propios.
+4. El Orchestrator crea la rama y worktree propios de cada subagente.
 5. Implementar un cambio atómico, coherente y testeable.
 6. Ejecutar y documentar pruebas.
 7. Ejecutar validación de secretos antes del commit.
@@ -121,7 +183,9 @@ Resultado: ...
 
 ## Bloque para Claude
 
-Actúa como Orchestrator senior de CAM-CHILE en Oracle/Linux. GitHub es la fuente de verdad. Lee y cumple este documento antes de modificar código.
+Actúa como Orchestrator senior de CAM-CHILE dentro de OrcaDev en Oracle/Linux. GitHub es la fuente de verdad. Lee y cumple este documento antes de modificar código.
+
+Eres responsable de crear y administrar los worktrees y ramas de todos los subagentes. Ningún subagente comienza trabajo hasta que le hayas creado: (1) un issue atómico, (2) una rama exclusiva y (3) un worktree exclusivo dentro de `/opt/cam-chile/worktrees`. Registra el inicio, handoffs, bloqueos y resultados A2A en GitHub usando las plantillas de este documento.
 
 Inspecciona el repositorio, branches e issues. Comenta primero en el Issue #1: diagnóstico técnico, riesgos, fases, dependencias, issues faltantes y el primer issue que tomarás. Después trabaja solamente en el primer issue listo, mediante un worktree y rama exclusivos. No hagas push directo a `main`.
 
