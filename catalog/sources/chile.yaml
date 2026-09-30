@@ -1,0 +1,19 @@
+# CAM-CHILE — Catálogo publicable de Chile
+#
+# ⚠️  IMPORTANTE: este archivo se considera PUBLICABLE solo si todas sus
+# entradas tienen `public_status: declared_public` y `license_or_terms_url`
+# real. Cualquier entrada con `public_status: unknown` o sin licencia
+# debe moverse a `_pending.yaml`.
+#
+# Por política (Issue #3), este archivo arranca VACÍO. Las entradas se
+# incorporan una por una, después de verificación manual + automatizada
+# (ver catalog/README.md).
+#
+# Cómo añadir una entrada:
+#   1. Duplica el bloque de catalog/sources/_template.yaml.
+#   2. Completa cada uno de los campos.
+#   3. Corre `python catalog/validate.py --source catalog/sources/chile.yaml`.
+#   4. Si exit 0 → la entrada es publicable.
+#   5. Si exit ≠ 0 → corrige o mueve a _pending.yaml.
+
+# (vacío intencionalmente — Issue #3)
