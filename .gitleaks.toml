@@ -1,0 +1,30 @@
+# gitleaks config
+title = "CAM-CHILE secrets baseline"
+
+[allowlist]
+paths = [
+  '''\.venv/''',
+  '''node_modules/''',
+  '''htmlcov/''',
+  '''backend/db/.*\.db$''',
+  '''\.env$''',
+  '''\.env\..*''',
+]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key"
+regex = '''(?i)(?:key|token|secret|password|passwd|pwd)[\"'\s:=]+[A-Za-z0-9_\-]{16,}'''
+tags = ["secret", "key"]
+
+[[rules]]
+id = "private-key"
+description = "Private key block"
+regex = '''-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
+tags = ["secret", "key"]
+
+[[rules]]
+id = "youtube-api-key"
+description = "YouTube Data API key"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+tags = ["secret", "google"]

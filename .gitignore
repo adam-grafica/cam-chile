@@ -1,0 +1,35 @@
+# Entorno
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# DB y cache
+backend/db/*.db
+backend/db/*.sqlite
+catalog/.cache/
+
+# Build
+dist/
+build/
+*.whl
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Logs
+*.log

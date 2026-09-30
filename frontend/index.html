@@ -3,86 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAM-CHILE - Mapa de Cámaras en Tiempo Real</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        #map { height: 100vh; width: 100%; }
-        .info-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            max-width: 300px;
-        }
-        .info-panel h2 { margin: 0 0 10px 0; font-size: 18px; }
-        .camera-count { font-size: 24px; font-weight: bold; color: #2196F3; }
-        .loading { color: #666; font-style: italic; }
-    </style>
+    <meta name="api-base" content="http://localhost:8000">
+    <meta name="allowed-hosts" content="youtube.com,youtu.be,youtube-nocookie.com,webcams.travel,skylinewebcams.com">
+    <title>CAM-CHILE — Mapa de cámaras públicas</title>
+
+    <!-- Leaflet CSS (CDN pinneado a versión fija para CSP estricta futura) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-    <div id="map"></div>
-    
-    <div class="info-panel">
-        <h2>📹 CAM-CHILE</h2>
-        <div>Cámaras activas: <span class="camera-count" id="count">Cargando...</span></div>
-        <p class="loading">Datos en tiempo real de Chile</p>
-    </div>
+    <div id="map" role="application" aria-label="Mapa de cámaras públicas de Chile"></div>
+
+    <aside class="info-panel" aria-label="Información del catálogo">
+        <h1>📹 CAM-CHILE</h1>
+        <p class="tagline">Cámaras públicas y autorizadas</p>
+        <div class="stat">
+            <span class="stat-label">Activas:</span>
+            <span class="stat-value" id="count">Cargando…</span>
+        </div>
+        <div class="filters" role="group" aria-label="Filtros">
+            <label>
+                <span>Región</span>
+                <select id="filter-region" aria-label="Filtrar por región">
+                    <option value="">Todas</option>
+                </select>
+            </label>
+            <label>
+                <span>Fuente</span>
+                <select id="filter-source" aria-label="Filtrar por fuente">
+                    <option value="">Todas</option>
+                </select>
+            </label>
+            <label>
+                <span>Estado</span>
+                <select id="filter-status" aria-label="Filtrar por estado público">
+                    <option value="">Todos</option>
+                    <option value="declared_public">declared_public</option>
+                    <option value="unknown">unknown</option>
+                    <option value="revoked">revoked</option>
+                </select>
+            </label>
+        </div>
+        <p class="loading" id="status-line">Cargando cámaras…</p>
+    </aside>
 
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script>
-        // Inicializar mapa (centrado en Chile)
-        const map = L.map('map').setView([-35.6751, -71.5430], 6);
-        
-        // Capa base: OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
 
-        // Icono personalizado para cámaras
-        const cameraIcon = L.divIcon({
-            html: '📹',
-            className: 'camera-marker',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15]
-        });
-
-        // Cargar cámaras desde API
-        async function loadCameras() {
-            try {
-                const response = await fetch('http://localhost:8000/api/cameras');
-                const cameras = await response.json();
-                
-                document.getElementById('count').textContent = cameras.length;
-                
-                cameras.forEach(cam => {
-                    if (cam.lat && cam.lon) {
-                        const marker = L.marker([cam.lat, cam.lon], { icon: cameraIcon })
-                            .addTo(map)
-                            .bindPopup(`
-                                <b>${cam.name}</b><br>
-                                Tipo: ${cam.feed_type}<br>
-                                <a href="${cam.stream_url}" target="_blank">Ver stream</a>
-                            `);
-                    }
-                });
-            } catch (error) {
-                console.error('Error cargando cámaras:', error);
-                document.getElementById('count').textContent = 'Error';
-            }
-        }
-
-        // Cargar al iniciar
-        loadCameras();
-    </script>
+    <script src="./config.js"></script>
+    <script src="./map.js"></script>
+    <script src="./player.js"></script>
+    <script src="./filters.js"></script>
 </body>
 </html>
