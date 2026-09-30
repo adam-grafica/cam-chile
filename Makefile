@@ -66,6 +66,6 @@ ci-local:
 	$(VENV)/bin/pytest tests/ -v --cov=backend --cov=catalog --cov-report=term-missing --cov-fail-under=80
 	@echo "▸ catalog validate"
 	$(VENV)/bin/python catalog/validate.py --all
-	@echo "▸ gitleaks (requiere binario en PATH)"
-	@gitleaks detect --no-git --source . || true
+	@echo "▸ gitleaks (requiere binario en PATH; falla si detecta secretos)"
+	@gitleaks detect --no-git --source .
 	@echo "✓ ci-local OK"

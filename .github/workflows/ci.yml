@@ -50,7 +50,7 @@ jobs:
         run: python catalog/validate.py --all
 
       - name: Secrets scan (gitleaks)
-        run: gitleaks detect --no-git --source . --redact || true
+        run: gitleaks detect --no-git --source . --redact
 
       - name: Backend smoke (healthz)
         run: |
