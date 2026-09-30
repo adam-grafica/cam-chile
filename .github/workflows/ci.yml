@@ -61,20 +61,17 @@ jobs:
           curl -sf -o /dev/null -w "readyz=%{http_code}\n" http://127.0.0.1:8765/readyz
           kill $UV_PID || true
 
-      - name: Docker build (local, sin push)
-        continue-on-error: true
+      - name: Docker build + smoke (sin push)
         run: |
-          if command -v docker >/dev/null 2>&1; then
-            docker build --target runtime -t cam-chile:test .
-            docker images cam-chile:test --format "{{.Repository}}:{{.Tag}} {{.Size}}"
-            docker run --rm -d --name camchile-ci -p 127.0.0.1:8765:8000 cam-chile:test
-            sleep 4
-            curl -sf -o /dev/null -w "healthz=%{http_code}\n" http://127.0.0.1:8765/healthz || echo "healthz=FAIL"
-            docker stop camchile-ci 2>/dev/null || true
-            echo "docker-build=ok"
-          else
-            echo "::warning::Docker no disponible en este runner — build local se ejecutará manualmente con make docker-build"
-          fi
+          set -euo pipefail
+          docker build --target runtime -t cam-chile:test .
+          docker images cam-chile:test --format "{{.Repository}}:{{.Tag}} {{.Size}}"
+          cleanup() { docker stop camchile-ci 2>/dev/null || true; }
+          trap cleanup EXIT
+          docker run --rm -d --name camchile-ci -p 127.0.0.1:8765:8000 cam-chile:test
+          sleep 4
+          curl --fail --silent --show-error -o /dev/null -w "healthz=%{http_code}\n" http://127.0.0.1:8765/healthz
+          echo "docker-smoke=ok"
 
       - name: Summary
         if: always()

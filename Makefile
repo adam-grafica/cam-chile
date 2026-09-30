@@ -83,13 +83,15 @@ docker-build:
 
 docker-run:
 	@echo "▸ docker run (127.0.0.1:8000)"
-	docker run --rm --name camchile-test -p 127.0.0.1:8000:8000 cam-chile:test &
-	@sleep 4
-	@echo "▸ /healthz"
-	@curl -sf -o /dev/null -w "  healthz=%{http_code}\n" http://127.0.0.1:8000/healthz || echo "  healthz=FAIL"
-	@echo "▸ security headers"
-	@curl -sI http://127.0.0.1:8000/healthz | grep -iE 'x-content-type-options|referrer-policy|x-frame-options|x-request-id' || echo "  no security headers found"
-	@docker stop camchile-test 2>/dev/null || true
+	@docker run --rm -d --name camchile-test -p 127.0.0.1:8000:8000 cam-chile:test
+	@trap "docker stop camchile-test 2>/dev/null || true" EXIT; \
+	sleep 4; \
+	echo "▸ /healthz"; \
+	curl --fail --silent --show-error -o /dev/null -w "  healthz=%{http_code}\n" http://127.0.0.1:8000/healthz; \
+	echo "▸ security headers"; \
+	curl --fail --silent --show-error -D - -o /dev/null http://127.0.0.1:8000/healthz \
+	  | grep -iE 'x-content-type-options|referrer-policy|x-frame-options|x-request-id' || (echo "  security headers missing"; exit 1); \
+	docker stop camchile-test 2>/dev/null || true
 	@echo "✓ docker-run OK"
 
 docker-compose-up:

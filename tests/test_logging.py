@@ -85,10 +85,46 @@ def test_request_id_is_unique_per_request(client):
     assert len(rids) == 10, "request_id debe ser único por request"
 
 
-def test_request_id_respects_inbound_header(client):
-    inbound = "abc-123-fixed-id"
+def test_valid_uuid_inbound_is_preserved(client):
+    """Un UUID válido entrante se preserva en la respuesta."""
+    inbound = "da894079-c728-4a6d-aca9-ebee69883d45"
     r = client.get("/healthz", headers={"X-Request-ID": inbound})
     assert r.headers["X-Request-ID"] == inbound
+
+
+def test_invalid_uuid_inbound_is_replaced(client):
+    """Un header inválido NO se refleja; se reemplaza por UUID4."""
+    bad_values = [
+        "abc-123-fixed-id",  # típico ejemplo no-UUID
+        "<script>alert(1)</script>",
+        "not a uuid",
+        "12345",
+        "' OR 1=1 --",
+        "",  # string vacío
+    ]
+    for bad in bad_values:
+        r = client.get("/healthz", headers={"X-Request-ID": bad})
+        # El header saliente NO debe ser el valor entrante malicioso.
+        assert r.headers["X-Request-ID"] != bad, f"reflejó valor inválido: {bad!r}"
+        # Debe ser un UUID válido.
+        assert re.match(
+            r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            r.headers["X-Request-ID"],
+        ), f"request_id saliente no es UUID4: {r.headers['X-Request-ID']!r}"
+
+
+def test_uuid_any_version_accepted(client):
+    """UUIDs de cualquier versión (v1, v3, v4, v5) son aceptados si son válidos."""
+    import uuid as uuid_mod
+
+    samples = [
+        str(uuid_mod.uuid4()),
+        str(uuid_mod.uuid5(uuid_mod.NAMESPACE_DNS, "example.com")),
+        str(uuid_mod.uuid1()),
+    ]
+    for s in samples:
+        r = client.get("/healthz", headers={"X-Request-ID": s})
+        assert r.headers["X-Request-ID"] == s
 
 
 def test_response_includes_security_headers(client):

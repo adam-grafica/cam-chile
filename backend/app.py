@@ -69,8 +69,23 @@ app = FastAPI(
 # ─── Middleware ──────────────────────────────────────────────────────────────
 @app.middleware("http")
 async def _request_id_and_log(request: Request, call_next):  # type: ignore[no-untyped-def]
-    """Asigna/respeta X-Request-ID y loguea inicio + fin con duración."""
-    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    """Asigna/respeta X-Request-ID (UUID válido) y loguea inicio + fin con duración.
+
+    Solo se aceptan UUIDs válidos como header entrante. Cualquier valor que no
+    pase `uuid.UUID()` se reemplaza por un UUID4 generado. Esto previene log
+    injection / reflection attacks via headers arbitrarios.
+    """
+    inbound = request.headers.get("X-Request-ID")
+    request_id: str | None = None
+    if inbound:
+        try:
+            # uuid.UUID acepta cualquier variante (v1, v4, etc.); el caller
+            # no puede forzar contenido arbitrario al log.
+            request_id = str(uuid.UUID(inbound))
+        except (ValueError, AttributeError, TypeError):
+            request_id = None
+    if request_id is None:
+        request_id = str(uuid.uuid4())
     request.state.request_id = request_id
     start = time.perf_counter()
     logger.info(
