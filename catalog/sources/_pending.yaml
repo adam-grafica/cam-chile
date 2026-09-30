@@ -1,0 +1,67 @@
+# CAM-CHILE — Catálogo PENDIENTE (candidatos en proceso de verificación)
+#
+# Las entradas aquí NO se publican. validate.py las MARCA con
+# `publishable: false` y razón de bloqueo. Solo se mueven a `chile.yaml`
+# cuando estén completamente verificadas.
+
+- id: alma-observatory-candidate
+  name: "ALMA Observatory Live"
+  country: CL
+  region: Antofagasta
+  city: San Pedro de Atacama
+  latitude: -23.0294
+  longitude: -67.7528
+  source_name: "ALMA Observatory"
+  source_url: "https://www.almaobservatory.org/en/webcams/"
+  stream_type: youtube_embed
+  # TODO: catalog debe reemplazar por el ID real del canal verificado
+  stream_url: "PENDING_VALIDATION"
+  public_status: unknown
+  license_or_terms_url: "https://www.almaobservatory.org/en/terms-of-use/"
+  last_checked_at: "2026-09-29T00:00:00Z"
+  # Bloqueos conocidos:
+  #   - stream_url pendiente de validación con oEmbed
+  #   - public_status no es declared_public
+  blocked_reasons:
+    - "stream_url es PENDING_VALIDATION"
+    - "public_status != declared_public"
+
+- id: tvn-24h-candidate
+  name: "TVN 24 Horas"
+  country: CL
+  region: "Metropolitana de Santiago"
+  city: "Santiago"
+  # Coordenada del canal (no del lugar físico). Pendiente de confirmar
+  # dirección exacta de la señal.
+  latitude: -33.4489
+  longitude: -70.6693
+  source_name: "Televisión Nacional de Chile"
+  source_url: "https://www.tvn.cl/"
+  stream_type: youtube_embed
+  stream_url: "PENDING_VALIDATION"
+  public_status: unknown
+  license_or_terms_url: "PENDING_VALIDATION"
+  last_checked_at: "2026-09-29T00:00:00Z"
+  blocked_reasons:
+    - "stream_url es PENDING_VALIDATION"
+    - "license_or_terms_url es PENDING_VALIDATION"
+    - "public_status != declared_public"
+
+- id: canal-24-horas-candidate
+  name: "Canal 24 Horas (CNN Chile)"
+  country: CL
+  region: "Metropolitana de Santiago"
+  city: "Santiago"
+  latitude: -33.4172
+  longitude: -70.6060
+  source_name: "CNN Chile"
+  source_url: "https://www.cnnchile.com/"
+  stream_type: youtube_embed
+  stream_url: "PENDING_VALIDATION"
+  public_status: unknown
+  license_or_terms_url: "PENDING_VALIDATION"
+  last_checked_at: "2026-09-29T00:00:00Z"
+  blocked_reasons:
+    - "stream_url es PENDING_VALIDATION"
+    - "license_or_terms_url es PENDING_VALIDATION"
+    - "public_status != declared_public"

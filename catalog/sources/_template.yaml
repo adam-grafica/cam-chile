@@ -1,0 +1,26 @@
+# CAM-CHILE — Template de entrada del catálogo curado
+#
+# Reglas:
+# 1. Cada entrada debe pasar `python catalog/validate.py` con exit 0.
+# 2. Ninguna entrada puede tener `public_status` distinto a "declared_public"
+#    en el archivo publicable (`chile.yaml`).
+# 3. Si una entrada está en proceso, va a `_pending.yaml` y validate.py la
+#    MARCA como bloqueada — NO se publica.
+# 4. `license_or_terms_url` debe ser una URL REAL a términos del proveedor
+#    (no la homepage genérica, no "Términos de YouTube").
+# 5. Coordenadas verificables contra OSM / Wikipedia / portal oficial.
+
+# - id: <slug-kebab-case>                    # único, ej: alma-observatory
+#   name: "<nombre legible>"
+#   country: CL
+#   region: "<región administrativa>"
+#   city: "<ciudad/localidad>"
+#   latitude: <float -90..90>
+#   longitude: <float -180..180>
+#   source_name: "<proveedor o medio>"
+#   source_url: "<URL oficial del proveedor>"
+#   stream_type: youtube_embed | youtube | hls | mp4 | iframe
+#   stream_url: "<URL pública del stream>"
+#   public_status: declared_public
+#   license_or_terms_url: "<URL real a términos o licencia>"
+#   last_checked_at: "2026-09-29T00:00:00Z"
