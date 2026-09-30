@@ -34,3 +34,5 @@ coverage.xml
 # Logs
 *.log.tools/
 .tools/
+test_bootstrap.sh/
+TASK.md
