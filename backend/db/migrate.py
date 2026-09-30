@@ -4,6 +4,7 @@ Migración de la base de datos SQLite.
 Uso:
     python -m backend.db.migrate          # aplica todas las migraciones pendientes
 """
+
 from __future__ import annotations
 
 import sqlite3

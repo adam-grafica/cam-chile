@@ -2,6 +2,7 @@
 Configuración centralizada vía variables de entorno.
 Lee desde .env si existe (via pydantic-settings).
 """
+
 from __future__ import annotations
 
 from functools import lru_cache

@@ -13,12 +13,11 @@ Exit codes:
   0  → todas las entradas OK (o pending con bloqueos documentados).
   1  → al menos una entrada malformada o que viola reglas del archivo.
 """
+
 from __future__ import annotations
 
 import argparse
-import json
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -60,7 +59,9 @@ class ValidationResult:
 
 
 # ─── Validación de campos ───────────────────────────────────────────────────
-def _check_url(value: Any, field_name: str, errors: list[str], *, allow_placeholder: bool = False) -> None:
+def _check_url(
+    value: Any, field_name: str, errors: list[str], *, allow_placeholder: bool = False
+) -> None:
     if not isinstance(value, str) or not value:
         errors.append(f"{field_name} is empty")
         return
@@ -113,8 +114,18 @@ def validate_entry(entry: dict[str, Any], *, file_kind: str) -> ValidationResult
 
     # URLs (placeholders permitidos solo en pending)
     allow_placeholder = file_kind == "pending"
-    _check_url(entry.get("source_url"), "source_url", errors, allow_placeholder=allow_placeholder)
-    _check_url(entry.get("stream_url"), "stream_url", errors, allow_placeholder=allow_placeholder)
+    _check_url(
+        entry.get("source_url"),
+        "source_url",
+        errors,
+        allow_placeholder=allow_placeholder,
+    )
+    _check_url(
+        entry.get("stream_url"),
+        "stream_url",
+        errors,
+        allow_placeholder=allow_placeholder,
+    )
     _check_url(
         entry.get("license_or_terms_url"),
         "license_or_terms_url",

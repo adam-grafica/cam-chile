@@ -32,4 +32,4 @@ htmlcov/
 coverage.xml
 
 # Logs
-*.log
+*.log.tools/

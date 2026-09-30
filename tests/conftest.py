@@ -1,7 +1,7 @@
 """
 Configuración común de pytest.
 """
-import socket
+
 import sys
 from pathlib import Path
 

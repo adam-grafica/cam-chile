@@ -1,4 +1,4 @@
-.PHONY: install dev test test-cov lint seed migrate clean format bootstrap worktree help
+.PHONY: install dev test test-cov lint seed migrate clean format bootstrap worktree ci-local help
 
 PYTHON ?= python3.12
 VENV   ?= .venv
@@ -16,6 +16,7 @@ help:
 	@echo "  clean       - Eliminar cache y DB local"
 	@echo "  bootstrap   - scripts/bootstrap.sh"
 	@echo "  worktree AGENT ISSUE SLUG - scripts/add-worktree.sh"
+	@echo "  ci-local    - Correr todos los gates localmente (Issue #14)"
 
 install:
 	$(PYTHON) -m venv $(VENV)
@@ -55,3 +56,16 @@ bootstrap:
 
 worktree:
 	bash scripts/add-worktree.sh $(AGENT) $(ISSUE) $(SLUG)
+
+ci-local:
+	@echo "▸ ruff"
+	$(VENV)/bin/ruff check backend catalog tests
+	@echo "▸ black"
+	$(VENV)/bin/black --check backend catalog tests
+	@echo "▸ pytest + coverage"
+	$(VENV)/bin/pytest tests/ -v --cov=backend --cov=catalog --cov-report=term-missing --cov-fail-under=80
+	@echo "▸ catalog validate"
+	$(VENV)/bin/python catalog/validate.py --all
+	@echo "▸ gitleaks (requiere binario en PATH; falla si detecta secretos)"
+	@gitleaks detect --no-git --source .
+	@echo "✓ ci-local OK"

@@ -8,6 +8,7 @@ Cada ADR captura una decisión arquitectónica significativa: contexto, opciones
 |---|---|---|
 | [0001](./0001-use-orca-worktree-path.md) | Path de worktrees (`/opt/orca/cam-chile`) | Aceptado |
 | [0002](./0002-single-repo-multiple-countries.md) | Un solo repo, múltiples países | Pendiente |
+| [0003](./0003-public-exposure-policy.md) | Política de exposición pública | Propuesto (#14) |
 
 ## Plantilla
 

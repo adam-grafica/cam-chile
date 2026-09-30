@@ -1,6 +1,7 @@
 """
 Tests para el formato de los YAMLs del catálogo.
 """
+
 from pathlib import Path
 
 import pytest
@@ -44,9 +45,9 @@ def test_chile_yaml_has_no_unknown_or_pending_entries():
     if not data:  # vacío por política
         return
     for entry in data:
-        assert entry.get("public_status") == "declared_public", (
-            f"{entry.get('id')} no publicable: {entry.get('public_status')}"
-        )
+        assert (
+            entry.get("public_status") == "declared_public"
+        ), f"{entry.get('id')} no publicable: {entry.get('public_status')}"
         assert entry.get("stream_url") != "PENDING_VALIDATION"
         assert entry.get("license_or_terms_url") != "PENDING_VALIDATION"
 
@@ -62,6 +63,6 @@ def test_no_entry_in_catalog_is_example():
             for field in ["stream_url", "source_url", "license_or_terms_url"]:
                 v = entry.get(field, "")
                 if isinstance(v, str):
-                    assert "example" not in v.lower() or "example.com" in v, (
-                        f"{fname}:{entry.get('id')}:{field}={v!r}"
-                    )
+                    assert (
+                        "example" not in v.lower() or "example.com" in v
+                    ), f"{fname}:{entry.get('id')}:{field}={v!r}"

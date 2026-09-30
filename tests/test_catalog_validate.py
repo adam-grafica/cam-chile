@@ -1,6 +1,8 @@
 """
 Tests para catalog.validate
 """
+
+import sys
 from pathlib import Path
 
 import pytest
@@ -39,7 +41,10 @@ def _good_pending() -> dict:
     e["public_status"] = "unknown"
     e["stream_url"] = "PENDING_VALIDATION"
     e["license_or_terms_url"] = "PENDING_VALIDATION"
-    e["blocked_reasons"] = ["stream_url es PENDING_VALIDATION", "public_status != declared_public"]
+    e["blocked_reasons"] = [
+        "stream_url es PENDING_VALIDATION",
+        "public_status != declared_public",
+    ]
     return e
 
 
@@ -150,9 +155,9 @@ def test_pending_yaml_has_documented_entries():
     for r in results:
         # Cada pending debe tener razones o errores de "no se valida como publishable"
         # pero NO errores de bloque_reasons faltantes
-        assert not any("blocked_reasons" in err for err in r.errors), (
-            f"{r.entry_id} missing blocked_reasons"
-        )
+        assert not any(
+            "blocked_reasons" in err for err in r.errors
+        ), f"{r.entry_id} missing blocked_reasons"
 
 
 def test_pending_yaml_no_publishable_status_silently():
@@ -160,9 +165,9 @@ def test_pending_yaml_no_publishable_status_silently():
     path = REPO_ROOT / "catalog" / "sources" / "_pending.yaml"
     _, raw = validate_file(path)
     for entry in raw:
-        assert entry.get("public_status") != "declared_public" or entry.get("blocked_reasons"), (
-            f"{entry.get('id')} declared_public en pending sin blocked_reasons"
-        )
+        assert entry.get("public_status") != "declared_public" or entry.get(
+            "blocked_reasons"
+        ), f"{entry.get('id')} declared_public en pending sin blocked_reasons"
 
 
 # ─── CLI ────────────────────────────────────────────────────────────────────
@@ -170,22 +175,94 @@ def test_cli_runs_clean_for_chile(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(REPO_ROOT)
     from catalog import validate as validate_cli
 
-    argv_save = validate_cli.sys.argv
+    argv_save = sys.argv
     try:
-        validate_cli.sys.argv = ["validate.py", "--all"]
+        sys.argv = ["validate.py", "--all"]
         rc = validate_cli.main()
     finally:
-        validate_cli.sys.argv = argv_save
+        sys.argv = argv_save
     assert rc == 0
 
 
 def test_cli_validates_pending(capsys):
     from catalog import validate as validate_cli
 
-    argv_save = validate_cli.sys.argv
+    argv_save = sys.argv
     try:
-        validate_cli.sys.argv = ["validate.py", "--source", "catalog/sources/_pending.yaml"]
+        sys.argv = [
+            "validate.py",
+            "--source",
+            "catalog/sources/_pending.yaml",
+        ]
         rc = validate_cli.main()
     finally:
-        validate_cli.sys.argv = argv_save
+        sys.argv = argv_save
     assert rc == 0
+
+
+def test_load_yaml_non_list_raises(tmp_path):
+    """YAML que no es lista → ValueError."""
+    from catalog.validate import load_yaml
+
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("not_a_list: 123\n")
+    with pytest.raises(ValueError, match="must be a list"):
+        load_yaml(bad)
+
+
+def test_load_yaml_missing_returns_empty(tmp_path):
+    """Archivo inexistente → lista vacía."""
+    from catalog.validate import load_yaml
+
+    assert load_yaml(tmp_path / "nope.yaml") == []
+
+
+def test_validate_file_rejects_malformed_yaml(tmp_path, monkeypatch, capsys):
+    """YAML no-lista debe ser rechazado por el CLI."""
+    from catalog import validate as validate_cli
+
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("not_a_list: 123\n")
+
+    argv_save = sys.argv
+    try:
+        sys.argv = ["validate.py", "--source", str(bad)]
+        rc = validate_cli.main()
+    finally:
+        sys.argv = argv_save
+    assert rc == 1
+    assert "must be a list" in capsys.readouterr().out
+
+
+def test_cli_no_args_errors(monkeypatch):
+    """Sin --source ni --all → argparse error."""
+    from catalog import validate as validate_cli
+
+    argv_save = sys.argv
+    try:
+        sys.argv = ["validate.py"]
+        with pytest.raises(SystemExit) as e:
+            validate_cli.main()
+        assert e.value.code == 2
+    finally:
+        sys.argv = argv_save
+
+
+def test_cli_skips_missing_file(monkeypatch, capsys, tmp_path):
+    """--source a archivo inexistente → skip silencioso, exit 0."""
+    from catalog import validate as validate_cli
+
+    argv_save = sys.argv
+    try:
+        sys.argv = [
+            "validate.py",
+            "--source",
+            str(tmp_path / "nope.yaml"),
+            "--source",
+            str(REPO_ROOT / "catalog" / "sources" / "chile.yaml"),
+        ]
+        rc = validate_cli.main()
+    finally:
+        sys.argv = argv_save
+    assert rc == 0
+    assert "skipping" in capsys.readouterr().out
