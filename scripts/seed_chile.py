@@ -1,91 +1,68 @@
 """
-Seed Script: Cámaras iniciales de Chile
-Agrega cámaras manualmente curadas para el MVP
+Seed script: agrega cámaras mínimas con el esquema canónico.
+Todas las cámaras aquí deben estar validadas por el agente catalog (issue #3).
+Este script es un placeholder seguro mientras se curan las entradas reales.
+
+Uso:
+    python scripts/seed_chile.py
 """
-import httpx
+from __future__ import annotations
+
 import asyncio
+import os
+import sys
+from pathlib import Path
 
-BASE_URL = "http://localhost:8000"
+# Permitir import de backend.*
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-CAMARAS_CHILE = [
-    # Santiago - YouTube Live
+import httpx  # noqa: E402
+
+BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+
+# Entradas curadas como "declared_public" para MVP.
+# El campo source_url debe apuntar a la página oficial del proveedor.
+CAMARAS_CHILE: list[dict] = [
     {
-        "name": "TVN 24h - Santiago Centro",
-        "lat": -33.4489,
-        "lon": -70.6693,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/watch?v=VjB_Oe3xYKw",
-        "address": "Santiago, RM"
-    },
-    {
-        "name": "24 Horas - Plaza Baquedano",
-        "lat": -33.4372,
-        "lon": -70.6206,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/watch?v=example",
-        "address": "Providencia, Santiago"
-    },
-    # Valparaíso
-    {
-        "name": "Valparaíso - Puerto",
-        "lat": -33.0472,
-        "lon": -71.6127,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/results?search_query=valparaiso+puerto+en+vivo",
-        "address": "Valparaíso, Valparaíso"
-    },
-    # Viña del Mar
-    {
-        "name": "Viña del Mar - Reñaca",
-        "lat": -33.0120,
-        "lon": -71.5519,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/results?search_query=viña+del+mar+reñaca+en+vivo",
-        "address": "Viña del Mar, Valparaíso"
-    },
-    # Pucón
-    {
-        "name": "Pucón - Volcán Villarrica",
-        "lat": -39.4167,
-        "lon": -71.9333,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/results?search_query=pucon+volcan+villarrica+en+vivo",
-        "address": "Pucón, Araucanía"
-    },
-    # Punta Arenas
-    {
-        "name": "Punta Arenas - Estrecho de Magallanes",
-        "lat": -53.1638,
-        "lon": -70.9171,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/results?search_query=punta+arenas+estrecho+magallanes",
-        "address": "Punta Arenas, Magallanes"
-    },
-    # Atacama - ALMA
-    {
-        "name": "ALMA Observatory - Atacama",
-        "lat": -23.0294,
-        "lon": -67.7528,
-        "feed_type": "youtube",
-        "stream_url": "https://www.youtube.com/results?search_query=alma+observatory+live",
-        "address": "San Pedro de Atacama, Antofagasta"
+        "name": "ALMA Observatory Live",
+        "country": "CL",
+        "region": "Antofagasta",
+        "city": "San Pedro de Atacama",
+        "latitude": -23.0294,
+        "longitude": -67.7528,
+        "source_name": "ALMA Observatory",
+        "source_url": "https://www.almaobservatory.org/en/webcams/",
+        "stream_type": "youtube_embed",
+        # Pendiente de validación manual por catalog (issue #3):
+        "stream_url": "https://www.youtube.com/watch?v=PENDING_VALIDATION",
+        "public_status": "unknown",
+        "license_or_terms_url": "https://www.almaobservatory.org/en/terms-of-use/",
     },
 ]
 
-async def seed_cameras():
-    """Agrega cámaras a la DB vía API"""
-    async with httpx.AsyncClient() as client:
+
+async def seed_cameras() -> int:
+    added = 0
+    async with httpx.AsyncClient(timeout=10.0) as client:
         for cam in CAMARAS_CHILE:
             try:
                 resp = await client.post(f"{BASE_URL}/api/cameras", json=cam)
-                if resp.status_code == 200:
-                    print(f"✅ Agregada: {cam['name']}")
+                if resp.status_code in (200, 201):
+                    print(f"✅ {cam['name']}")
+                    added += 1
                 else:
-                    print(f"⚠️ Error {resp.status_code}: {cam['name']}")
-            except Exception as e:
-                print(f"❌ Error: {cam['name']} - {e}")
+                    print(f"⚠️  {resp.status_code} {cam['name']}: {resp.text}")
+            except httpx.HTTPError as e:
+                print(f"❌ {cam['name']}: {e}")
+    return added
+
+
+def main() -> int:
+    print("🚀 Seed CAM-CHILE (placeholder curado, ver issue #3)…")
+    n = asyncio.run(seed_cameras())
+    print(f"✅ Listo. {n} cámaras agregadas.")
+    return 0
+
 
 if __name__ == "__main__":
-    print("🚀 Seed: Agregando cámaras de Chile...")
-    asyncio.run(seed_cameras())
-    print("✅ Seed completado!")
+    raise SystemExit(main())
